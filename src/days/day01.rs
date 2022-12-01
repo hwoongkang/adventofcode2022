@@ -1,4 +1,5 @@
 use super::Solution;
+use std::collections::BinaryHeap;
 
 pub struct Day01 {}
 
@@ -24,6 +25,12 @@ impl Solution for Day01 {
         nums.iter().max().unwrap().to_string()
     }
     fn solve_part_2(input_file_name: &str) -> String {
-        unimplemented!("")
+        let calories = Self::parse_input(Self::read_input(input_file_name));
+        let mut sorted_calories = BinaryHeap::from(calories);
+        let mut ans = 0;
+        for _ in 0..3 {
+            ans += sorted_calories.pop().unwrap();
+        }
+        ans.to_string()
     }
 }
