@@ -30,3 +30,5 @@ cargo run
 
 - 입력은 일단 `Cargo.toml`과 같은 위계에 위치한 `input.txt`에서 받고 있습니다.  
   `Solution` trait 에서 입력 파일의 위치를 받고 있으니, 수정해서 사용할 수 있습니다.
+
+- 솔루션에 관한 부가 설명은 PR description에 적을 예정입니다.
