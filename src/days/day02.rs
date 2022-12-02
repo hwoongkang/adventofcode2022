@@ -2,6 +2,7 @@ use super::Solution;
 
 use std::str::FromStr;
 
+#[derive(Copy, Clone)]
 enum RSP {
     Rock,
     Paper,
@@ -19,10 +20,36 @@ impl FromStr for RSP {
     }
 }
 
+impl RSP {
+    fn get_strategy(&self, result: &Result) -> Self {
+        match (self, result) {
+            (RSP::Rock, Result::Win) => RSP::Paper,
+            (RSP::Rock, Result::Lose) => RSP::Scissors,
+            (RSP::Paper, Result::Win) => RSP::Scissors,
+            (RSP::Paper, Result::Lose) => RSP::Rock,
+            (RSP::Scissors, Result::Win) => RSP::Rock,
+            (RSP::Scissors, Result::Lose) => RSP::Paper,
+            _ => self.clone(),
+        }
+    }
+}
+
 enum Result {
     Win,
     Lose,
     Draw,
+}
+
+impl FromStr for Result {
+    type Err = ();
+    fn from_str(s: &str) -> std::result::Result<Result, ()> {
+        match s {
+            "X" => Ok(Result::Lose),
+            "Y" => Ok(Result::Draw),
+            "Z" => Ok(Result::Win),
+            _ => Err(()),
+        }
+    }
 }
 
 fn get_score(rsp: &RSP, result: &Result) -> u32 {
@@ -69,6 +96,16 @@ impl Solution for Day02 {
         ans.to_string()
     }
     fn solve_part_2(input_file_name: &str) -> String {
-        unimplemented!("")
+        let mut ans = 0;
+        let input = Self::read_input(input_file_name);
+        for line in input.lines() {
+            let mut words = line.split_whitespace();
+            let opponent: RSP = words.next().unwrap().parse().unwrap();
+            let strategy: Result = words.next().unwrap().parse().unwrap();
+            let me = opponent.get_strategy(&strategy);
+            let score = get_score(&me, &strategy);
+            ans += score;
+        }
+        ans.to_string()
     }
 }
