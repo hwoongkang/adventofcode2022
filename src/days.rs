@@ -14,3 +14,5 @@ pub use day_2021_25::*;
 
 mod day01;
 pub use day01::*;
+mod day02;
+pub use day02::*;
