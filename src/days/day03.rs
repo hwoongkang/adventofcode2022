@@ -9,7 +9,8 @@ impl Solution for Day03 {
         Self::part_1(input)
     }
     fn solve_part_2(input_file_name: &str) -> String {
-        String::from("0")
+        let input = Self::read_input(input_file_name);
+        Self::part_2(input)
     }
 }
 impl Day03 {
@@ -49,6 +50,27 @@ impl Day03 {
         }
         ans.to_string()
     }
+
+    fn part_2(input: String) -> String {
+        let mut ans = 0;
+
+        let mut set: HashSet<char> = HashSet::new();
+        for (index, line) in input.lines().enumerate() {
+            let now: HashSet<char> = line.chars().collect();
+            if index % 3 == 0 {
+                set = now
+            } else if index % 3 == 1 {
+                set = set.intersection(&now).map(|a| *a).collect();
+            } else {
+                set = set.intersection(&now).map(|a| *a).collect();
+                for ch in set.iter() {
+                    ans += Self::get_priority(*ch);
+                }
+            }
+        }
+
+        ans.to_string()
+    }
 }
 
 #[cfg(test)]
@@ -76,6 +98,14 @@ CrZsJsPPZsGzwwsLwLmpwMDw",
     }
     #[test]
     fn test_day03_part_2() {
-        assert_eq!(Day03::solve_part_2("input.txt"), "0");
+        let input = String::from(
+            "vJrwpWtwJgWrhcsFMMfFFhFp
+jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+PmmdzqPrVvPwwTWBwg
+wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+ttgJtRGJQctTZtZT
+CrZsJsPPZsGzwwsLwLmpwMDw",
+        );
+        assert_eq!(Day03::part_2(input), "70");
     }
 }
