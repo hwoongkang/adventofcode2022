@@ -8,7 +8,7 @@ impl Solution for Day04 {
         Self::part_1(Self::read_input(input_file_name))
     }
     fn solve_part_2(input_file_name: &str) -> String {
-        unimplemented!("")
+        Self::part_2(Self::read_input(input_file_name))
     }
 }
 
@@ -20,6 +20,10 @@ struct Range {
 impl Range {
     fn contains(&self, other: &Self) -> bool {
         self.min <= other.min && other.max <= self.max
+    }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        self.min <= other.max && other.min <= self.max
     }
 }
 
@@ -48,6 +52,14 @@ impl Day04 {
             .count()
             .to_string()
     }
+    fn part_2(input: String) -> String {
+        input
+            .lines()
+            .map(|line| Self::parse_line(line))
+            .filter(|(a, b)| a.overlaps(b))
+            .count()
+            .to_string()
+    }
 }
 
 #[cfg(test)]
@@ -65,5 +77,18 @@ mod day04_test {
 2-6,4-8",
         );
         assert_eq!(Day04::part_1(sample_input), "2");
+    }
+
+    #[test]
+    fn part_2() {
+        let sample_input = String::from(
+            "2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8",
+        );
+        assert_eq!(Day04::part_2(sample_input), "4");
     }
 }
