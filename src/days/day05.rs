@@ -5,22 +5,34 @@ pub struct Day05;
 
 impl Solution for Day05 {
     fn solve_part_1(input: String) -> String {
-        let mut stacks = Stacks::new(&[
+        let stacks = Stacks::new(&[
             "GFVHPS", "GJFBVDZM", "GMLJN", "NGZVDWP", "VRCB", "VRSMPWLZ", "THP", "QRSNCHZV",
             "FLGPVQJ",
         ]);
-        Self::part_1(&mut stacks, input)
+        Self::part_1(stacks, input)
     }
     fn solve_part_2(input: String) -> String {
-        unimplemented!("")
+        let stacks = Stacks::new(&[
+            "GFVHPS", "GJFBVDZM", "GMLJN", "NGZVDWP", "VRCB", "VRSMPWLZ", "THP", "QRSNCHZV",
+            "FLGPVQJ",
+        ]);
+        Self::part_2(stacks, input)
     }
 }
 
 impl Day05 {
-    fn part_1(stacks: &mut Stacks, input: String) -> String {
+    fn part_1(mut stacks: Stacks, input: String) -> String {
         for line in input.lines() {
             let command: Command = line.parse().unwrap();
             stacks.execute(command);
+        }
+        stacks.get_top_crates()
+    }
+
+    fn part_2(mut stacks: Stacks, input: String) -> String {
+        for line in input.lines() {
+            let command: Command = line.parse().unwrap();
+            stacks.execute_v2(command);
         }
         stacks.get_top_crates()
     }
@@ -67,6 +79,14 @@ impl Stacks {
         }
     }
 
+    fn execute_v2(&mut self, command: Command) {
+        let from = &mut self.stacks[command.from_stack];
+        let l = from.len();
+        let mut tail = from.split_off(l - command.num_crate_to_move);
+        let to = &mut self.stacks[command.to_stack];
+        to.append(&mut tail);
+    }
+
     fn get_top_crates(&self) -> String {
         self.stacks.iter().map(|s| s.last().unwrap()).collect()
     }
@@ -83,14 +103,18 @@ move 1 from 1 to 2";
 
     #[test]
     fn test_day05_part_1() {
-        let mut sample_stacks = Stacks::new(&["ZN", "MCD", "P"]);
+        let sample_stacks = Stacks::new(&["ZN", "MCD", "P"]);
         assert_eq!(
-            Day05::part_1(&mut sample_stacks, SAMPLE_INPUT.to_string()),
+            Day05::part_1(sample_stacks, SAMPLE_INPUT.to_string()),
             "CMZ"
         );
     }
     #[test]
     fn test_day05_part_2() {
-        assert_eq!(Day05::solve_part_2("".to_string()), "".to_string());
+        let sample_stacks = Stacks::new(&["ZN", "MCD", "P"]);
+        assert_eq!(
+            Day05::part_2(sample_stacks, SAMPLE_INPUT.to_string()),
+            "MCD"
+        );
     }
 }
