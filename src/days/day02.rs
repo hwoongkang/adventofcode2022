@@ -83,9 +83,9 @@ fn get_result(opponent: &RSP, me: &RSP) -> Result {
 pub struct Day02 {}
 
 impl Solution for Day02 {
-    fn solve_part_1(input_file_name: &str) -> String {
+    fn solve_part_1(input: String) -> String {
         let mut ans = 0;
-        let input = Self::read_input(input_file_name);
+
         for line in input.lines() {
             let mut words = line.split_whitespace();
             let opponent: RSP = words.next().unwrap().parse().unwrap();
@@ -95,9 +95,9 @@ impl Solution for Day02 {
         }
         ans.to_string()
     }
-    fn solve_part_2(input_file_name: &str) -> String {
+    fn solve_part_2(input: String) -> String {
         let mut ans = 0;
-        let input = Self::read_input(input_file_name);
+
         for line in input.lines() {
             let mut words = line.split_whitespace();
             let opponent: RSP = words.next().unwrap().parse().unwrap();

@@ -4,11 +4,11 @@ use std::str::FromStr;
 pub struct Day04 {}
 
 impl Solution for Day04 {
-    fn solve_part_1(input_file_name: &str) -> String {
-        Self::part_1(Self::read_input(input_file_name))
+    fn solve_part_1(input: String) -> String {
+        Self::part_1(input)
     }
-    fn solve_part_2(input_file_name: &str) -> String {
-        Self::part_2(Self::read_input(input_file_name))
+    fn solve_part_2(input: String) -> String {
+        Self::part_2(input)
     }
 }
 

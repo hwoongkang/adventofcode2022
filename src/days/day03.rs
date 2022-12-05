@@ -4,12 +4,10 @@ use std::collections::HashSet;
 pub struct Day03 {}
 
 impl Solution for Day03 {
-    fn solve_part_1(input_file_name: &str) -> String {
-        let input = Self::read_input(input_file_name);
+    fn solve_part_1(input: String) -> String {
         Self::part_1(input)
     }
-    fn solve_part_2(input_file_name: &str) -> String {
-        let input = Self::read_input(input_file_name);
+    fn solve_part_2(input: String) -> String {
         Self::part_2(input)
     }
 }
