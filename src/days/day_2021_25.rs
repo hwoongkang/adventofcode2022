@@ -97,15 +97,15 @@ impl FromStr for Map {
 }
 
 impl Solution for Day2021_25 {
-    fn solve_part_1(input_file_name: &str) -> String {
-        let mut map = Map::from_str(&Self::read_input(input_file_name)).unwrap();
+    fn solve_part_1(input: String) -> String {
+        let mut map = Map::from_str(&input).unwrap();
         let mut ans = 1;
         while map.tick() > 0 {
             ans += 1;
         }
         ans.to_string()
     }
-    fn solve_part_2(input_file_name: &str) -> String {
+    fn solve_part_2(_input: String) -> String {
         unimplemented!("")
     }
 }

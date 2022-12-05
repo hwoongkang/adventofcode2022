@@ -1,10 +1,11 @@
 use std::fs;
+
+pub fn read_input(input_file_name: &str) -> String {
+    fs::read_to_string(input_file_name).expect("Input Error")
+}
 pub trait Solution {
-    fn read_input(input_file_name: &str) -> String {
-        fs::read_to_string(input_file_name).expect("Input Error")
-    }
-    fn solve_part_1(input_file_name: &str) -> String;
-    fn solve_part_2(input_file_name: &str) -> String;
+    fn solve_part_1(input: String) -> String;
+    fn solve_part_2(input: String) -> String;
 }
 
 mod day_2021_1;
@@ -20,3 +21,5 @@ mod day03;
 pub use day03::*;
 mod day04;
 pub use day04::*;
+mod day05;
+pub use day05::*;
