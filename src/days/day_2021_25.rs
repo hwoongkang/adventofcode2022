@@ -105,7 +105,7 @@ impl Solution for Day2021_25 {
         }
         ans.to_string()
     }
-    fn solve_part_2(input: String) -> String {
+    fn solve_part_2(_input: String) -> String {
         unimplemented!("")
     }
 }
