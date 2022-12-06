@@ -11,36 +11,31 @@ impl Solution for Day06 {
     }
 }
 
-fn first_buffer(input: &str) -> usize {
-    let mut seen: [i32; 26] = [0; 26];
-    let indices: Vec<usize> = input.chars().map(|c| c as usize - 'a' as usize).collect();
-    for i in 0..4 {
+fn first_nonduplicate(input: &str, length: usize) -> usize {
+    let mut seen = [0usize; 26];
+    let indices: Vec<usize> = input
+        .chars()
+        .map(|c| (c as usize) - ('a' as usize))
+        .collect();
+    for i in 0..length {
         seen[indices[i]] += 1;
     }
-    for i in 4..indices.len() {
-        if seen.iter().filter(|&&x| x == 1).count() == 4 {
+    for i in length..indices.len() {
+        if seen.iter().filter(|&&x| x == 1).count() == length {
             return i;
         }
+        seen[indices[i - length]] -= 1;
         seen[indices[i]] += 1;
-        seen[indices[i - 4]] -= 1;
     }
     0
 }
 
+fn first_buffer(input: &str) -> usize {
+    first_nonduplicate(input, 4)
+}
+
 fn first_message(input: &str) -> usize {
-    let mut seen: [i32; 26] = [0; 26];
-    let indices: Vec<usize> = input.chars().map(|c| c as usize - 'a' as usize).collect();
-    for i in 0..14 {
-        seen[indices[i]] += 1;
-    }
-    for i in 14..indices.len() {
-        if seen.iter().filter(|&&x| x == 1).count() == 14 {
-            return i;
-        }
-        seen[indices[i]] += 1;
-        seen[indices[i - 14]] -= 1;
-    }
-    0
+    first_nonduplicate(input, 14)
 }
 
 #[cfg(test)]
