@@ -25,3 +25,5 @@ mod day05;
 pub use day05::*;
 mod day06;
 pub use day06::*;
+mod day07;
+pub use day07::*;
