@@ -15,7 +15,12 @@ impl Solution for Day07 {
         ans.to_string()
     }
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let mut fs = FileSystem::from(input);
+        let mut sizes = fs.get_sizes();
+        sizes.sort();
+        let needed_space = fs.root.borrow_mut().get_size() - 40_000_000;
+        let ans = *sizes.iter().find(|&&size| size >= needed_space).unwrap();
+        ans.to_string()
     }
 }
 #[derive(Debug)]
@@ -121,9 +126,7 @@ impl FileSystem {
                         stack.push(next_node.clone());
                     }
                 }
-                Node::File(_) => {
-                    sizes.push(100_001);
-                }
+                Node::File(_) => {}
             }
         }
         sizes
@@ -134,8 +137,7 @@ impl FileSystem {
 mod day07_tests {
     use super::*;
 
-    #[test]
-    fn test_part_1() {
+    fn get_test_input() -> String {
         let input = String::from(
             "$ cd /
         $ ls
@@ -162,16 +164,23 @@ mod day07_tests {
         7214296 k
         ",
         );
-        let input = input
+        input
             .lines()
             .map(|l| l.trim())
             .collect::<Vec<_>>()
-            .join("\n");
+            .join("\n")
+    }
+
+    #[test]
+    fn test_part_1() {
+        let input = get_test_input();
         let ans = Day07::solve_part_1(input);
         assert_eq!(ans, 95437.to_string());
     }
     #[test]
     fn test_part_2() {
-        assert_eq!(Day07::solve_part_2("".to_string()), "".to_string());
+        let input = get_test_input();
+        let ans = Day07::solve_part_2(input);
+        assert_eq!(ans, 2493_3642.to_string());
     }
 }
