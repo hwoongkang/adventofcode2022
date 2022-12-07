@@ -1,4 +1,8 @@
-use std::collections::HashMap;
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    rc::{Rc, Weak},
+};
 
 use super::Solution;
 
@@ -12,75 +16,94 @@ impl Solution for Day07 {
         String::new()
     }
 }
-
 #[derive(Debug)]
 enum Node {
-    File(usize),
     Dir {
         size: Option<usize>,
-        children: HashMap<String, usize>,
-        parent: Option<usize>,
+        parent: Option<Weak<RefCell<Node>>>,
+        children: HashMap<String, Rc<RefCell<Node>>>,
     },
+    File(usize),
+}
+
+impl Node {
+    fn get_size(&mut self) -> usize {
+        match self {
+            Node::File(size) => *size,
+            Node::Dir { size, children, .. } => {
+                if let Some(size) = size {
+                    *size
+                } else {
+                    let calculated_size: usize = children
+                        .values()
+                        .map(|child| child.borrow_mut().get_size())
+                        .sum();
+                    *size = Some(calculated_size);
+                    calculated_size
+                }
+            }
+        }
+    }
 }
 #[derive(Debug)]
 struct FileSystem {
-    cursor: usize,
-    nodes: Vec<Node>,
+    root: Rc<RefCell<Node>>,
+    head: Weak<RefCell<Node>>,
 }
 
 impl FileSystem {
     fn new() -> Self {
-        Self {
-            cursor: 0,
-            nodes: vec![Node::Dir {
-                parent: None,
-                children: HashMap::new(),
-                size: None,
-            }],
-        }
+        let root = Rc::new(RefCell::new(Node::Dir {
+            size: None,
+            parent: None,
+            children: HashMap::new(),
+        }));
+        let head = Rc::downgrade(&root);
+        Self { root, head }
     }
 
+    fn from(input: String) -> Self {
+        let mut fs = Self::new();
+        for line in input.lines().skip(1) {
+            let cmd: Vec<&str> = line.split_whitespace().collect();
+            match (cmd[0], cmd[1]) {
+                ("$", "cd") => {
+                    fs.cd(cmd[2]);
+                }
+                ("$", "ls") => {}
+                _ => fs.ls((cmd[0], cmd[1])),
+            }
+        }
+        fs
+    }
     fn cd(&mut self, dir: &str) {
-        let curr = &self.nodes[self.cursor];
-        match curr {
-            Node::File(_) => {}
+        let new_head = match &*self.head.upgrade().unwrap().borrow() {
             Node::Dir {
-                parent, children, ..
+                children, parent, ..
             } => match dir {
-                ".." => {
-                    self.cursor = parent.unwrap();
-                }
-                name => {
-                    self.cursor = children[name];
-                }
+                ".." => parent.clone(),
+                _ => Some(Rc::downgrade(&children.get(dir).unwrap())),
             },
+            Node::File(_) => None,
+        };
+        if let Some(new_head) = new_head {
+            self.head = new_head;
         }
     }
-
-    fn ls(&mut self, words: &[&str]) {
-        let new_node = match words[0] {
+    fn ls(&mut self, cmd: (&str, &str)) {
+        let new_node = match cmd.0 {
             "dir" => Node::Dir {
-                parent: Some(self.cursor),
-                children: HashMap::new(),
                 size: None,
+                parent: Some(self.head.clone()),
+                children: HashMap::new(),
             },
             size => Node::File(size.parse().unwrap()),
         };
-        let l = self.nodes.len();
-        if let Node::Dir { children, .. } = &mut self.nodes[self.cursor] {
-            children.insert(words[1].to_string(), l);
-        }
-        self.nodes.push(new_node);
-    }
-
-    fn init(&mut self, input: String) {
-        for line in input.lines().skip(1) {
-            let words: Vec<&str> = line.split_whitespace().collect();
-            match (words[0], words[1]) {
-                ("$", "cd") => self.cd(words[2]),
-                ("$", "ls") => {}
-                _ => self.ls(&words),
+        match &mut *self.head.upgrade().unwrap().borrow_mut() {
+            Node::Dir { children, .. } => {
+                children.insert(cmd.1.to_string(), Rc::new(RefCell::new(new_node)));
             }
+            Node::File(_) => {}
         }
     }
 }
@@ -122,8 +145,8 @@ mod day07_tests {
             .map(|l| l.trim())
             .collect::<Vec<_>>()
             .join("\n");
-        let mut fs = FileSystem::new();
-        fs.init(input);
+        let mut fs = FileSystem::from(input);
+        fs.root.borrow_mut().get_size();
         println!("{:?}", fs);
         assert_eq!(Day07::solve_part_1("".to_string()), "".to_string());
     }
