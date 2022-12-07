@@ -10,7 +10,9 @@ pub struct Day07;
 
 impl Solution for Day07 {
     fn solve_part_1(input: String) -> String {
-        String::new()
+        let mut fs = FileSystem::from(input);
+        let ans: usize = fs.get_sizes().iter().filter(|&&size| size <= 100_000).sum();
+        ans.to_string()
     }
     fn solve_part_2(input: String) -> String {
         String::new()
@@ -106,6 +108,26 @@ impl FileSystem {
             Node::File(_) => {}
         }
     }
+
+    fn get_sizes(&mut self) -> Vec<usize> {
+        let mut sizes = vec![];
+        self.root.borrow_mut().get_size();
+        let mut stack = vec![self.root.clone()];
+        while let Some(node) = stack.pop() {
+            match &*node.borrow() {
+                Node::Dir { size, children, .. } => {
+                    sizes.push(size.unwrap());
+                    for (_, next_node) in children.iter() {
+                        stack.push(next_node.clone());
+                    }
+                }
+                Node::File(_) => {
+                    sizes.push(100_001);
+                }
+            }
+        }
+        sizes
+    }
 }
 
 #[cfg(test)]
@@ -145,10 +167,8 @@ mod day07_tests {
             .map(|l| l.trim())
             .collect::<Vec<_>>()
             .join("\n");
-        let mut fs = FileSystem::from(input);
-        fs.root.borrow_mut().get_size();
-        println!("{:?}", fs);
-        assert_eq!(Day07::solve_part_1("".to_string()), "".to_string());
+        let ans = Day07::solve_part_1(input);
+        assert_eq!(ans, 95437.to_string());
     }
     #[test]
     fn test_part_2() {
