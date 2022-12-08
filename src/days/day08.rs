@@ -8,7 +8,8 @@ impl Solution for Day08 {
         height_map.num_visible_trees().to_string()
     }
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let height_map = HeightMap::from(&input);
+        height_map.optimal_scenic_score().to_string()
     }
 }
 #[derive(Debug)]
@@ -76,6 +77,59 @@ impl HeightMap {
             .map(|row| row.iter().filter(|&&v| v).count())
             .sum()
     }
+
+    fn scenic_score(&self, r: usize, c: usize) -> usize {
+        let height = self.trees.len();
+        let width = self.trees[0].len();
+        let me = self.trees[r][c];
+        let mut ans: usize = 1;
+        for row in (0..r).rev() {
+            let now = self.trees[row][c];
+            let num_trees = r - row;
+            if now >= me || row == 0 {
+                ans *= num_trees;
+                break;
+            }
+        }
+        for row in r + 1..height {
+            let now = self.trees[row][c];
+            let num_trees = row - r;
+            if now >= me || row == height - 1 {
+                ans *= num_trees;
+                break;
+            }
+        }
+        for col in (0..c).rev() {
+            let now = self.trees[r][col];
+            let num_trees = c - col;
+            if now >= me || col == 0 {
+                ans *= num_trees;
+                break;
+            }
+        }
+        for col in c + 1..width {
+            let now = self.trees[r][col];
+            let num_trees = col - c;
+            if now >= me || col == width - 1 {
+                ans *= num_trees;
+                break;
+            }
+        }
+        ans
+    }
+
+    fn optimal_scenic_score(&self) -> usize {
+        let height = self.trees.len();
+        let width = self.trees[0].len();
+        (1..height - 1)
+            .flat_map(|r| (1..width - 1).map(move |c| (r, c)))
+            .map(|(r, c)| {
+                let score = self.scenic_score(r, c);
+                score
+            })
+            .max()
+            .unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -102,6 +156,6 @@ mod day08_tests {
     fn test_part_2() {
         let input = get_test_input();
         let ans = Day08::solve_part_2(input);
-        assert_eq!(ans, "".to_string());
+        assert_eq!(ans, "8".to_string());
     }
 }
