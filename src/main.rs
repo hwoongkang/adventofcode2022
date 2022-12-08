@@ -1,8 +1,10 @@
 mod days;
 use days::*;
 
+type Today = Day08;
+
 fn main() {
     let input = read_input("input.txt");
-    println!("Part 1: {}", Day07::solve_part_1(input.clone()));
-    println!("Part 2: {}", Day07::solve_part_2(input));
+    println!("Part 1: {}", Today::solve_part_1(input.clone()));
+    println!("Part 2: {}", Today::solve_part_2(input));
 }
