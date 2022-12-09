@@ -6,28 +6,16 @@ pub struct Day09;
 
 impl Solution for Day09 {
     fn solve_part_1(input: String) -> String {
-        let mut head = Position(0, 0);
-        let mut tail = Position(0, 0);
-        let mut visited: HashSet<Position> = HashSet::new();
-        visited.insert(tail);
+        let mut rope = Rope::new(2);
         for line in input.lines() {
-            let (command, dist) = parse_line(line);
-            for _ in 0..dist {
-                head.exec(&command);
-                tail.follow(&head);
-                visited.insert(tail);
-            }
+            rope.exec_line(line);
         }
-        visited.len().to_string()
+        rope.tail_trace.len().to_string()
     }
     fn solve_part_2(input: String) -> String {
-        let mut rope = Rope::new();
+        let mut rope = Rope::new(10);
         for line in input.lines() {
-            let (command, dist) = parse_line(line);
-            for _ in 0..dist {
-                rope.exec(&command);
-                rope.follow();
-            }
+            rope.exec_line(line);
         }
         rope.tail_trace.len().to_string()
     }
@@ -54,9 +42,9 @@ impl std::str::FromStr for Command {
 }
 
 #[derive(Hash, PartialEq, Eq, Copy, Clone)]
-struct Position(i32, i32);
+struct Knot(i32, i32);
 
-impl Position {
+impl Knot {
     fn exec(&mut self, command: &Command) {
         match command {
             Command::Right => self.0 += 1,
@@ -66,7 +54,7 @@ impl Position {
         }
     }
 
-    fn follow(&mut self, head: &Position) {
+    fn follow(&mut self, head: &Knot) {
         let dx = head.0 - self.0;
         let dy = head.1 - self.1;
         if dx.abs() <= 1 && dy.abs() <= 1 {
@@ -79,15 +67,23 @@ impl Position {
 }
 
 struct Rope {
-    knots: Vec<Position>,
-    tail_trace: HashSet<Position>,
+    knots: Vec<Knot>,
+    tail_trace: HashSet<Knot>,
 }
 
 impl Rope {
-    fn new() -> Self {
+    fn new(length: usize) -> Self {
         Self {
-            knots: (0..10).map(|_| Position(0, 0)).collect(),
-            tail_trace: HashSet::from_iter([Position(0, 0)]),
+            knots: (0..length).map(|_| Knot(0, 0)).collect(),
+            tail_trace: HashSet::from_iter([Knot(0, 0)]),
+        }
+    }
+
+    fn exec_line(&mut self, input: &str) {
+        let (command, dist) = parse_line(input);
+        for _ in 0..dist {
+            self.exec(&command);
+            self.follow();
         }
     }
 
@@ -96,12 +92,13 @@ impl Rope {
     }
 
     fn follow(&mut self) {
-        for i in 1..10 {
+        let length = self.knots.len();
+        for i in 1..length {
             let front = self.knots[i - 1];
             let back = &mut self.knots[i];
             back.follow(&front);
         }
-        self.tail_trace.insert(self.knots[9]);
+        self.tail_trace.insert(self.knots[length - 1]);
     }
 }
 
