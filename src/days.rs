@@ -31,3 +31,5 @@ mod day08;
 pub use day08::*;
 mod day09;
 pub use day09::*;
+mod day10;
+pub use day10::*;
