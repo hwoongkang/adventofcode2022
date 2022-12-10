@@ -20,7 +20,7 @@ impl Solution for Day10 {
             let command = line.parse::<Command>().unwrap();
             crt.exec(&command);
         }
-        crt.show();
+        crt.pretty_print();
         String::new()
     }
 }
@@ -39,9 +39,17 @@ impl CRT {
             display: vec![false; 240],
         }
     }
-    fn show(&self) {
-        for i in 0..240 {
-            print!("{}", if self.display[i] { "#" } else { "." });
+
+    fn get_display_status(&self) -> Vec<char> {
+        self.display
+            .iter()
+            .map(|&b| if b { '#' } else { '.' })
+            .collect()
+    }
+
+    fn pretty_print(&self) {
+        for (i, char) in self.get_display_status().iter().enumerate() {
+            print!("{}", char);
             if i % 40 == 39 {
                 println!();
             }
@@ -49,7 +57,6 @@ impl CRT {
     }
     fn draw(&mut self) {
         let cycle = self.cycle % 40;
-        println!("{}, {}, {}", cycle, self.register, cycle - self.register);
         if (cycle - self.register).abs() <= 1 {
             self.display[self.cycle as usize] = true;
         }
@@ -142,8 +149,24 @@ mod day10_tests {
     #[test]
     fn test_part_2() {
         let input = get_sample_input();
-
-        Day10::solve_part_2(input);
+        let mut crt = CRT::new();
+        for line in input.lines() {
+            let command = line.parse::<Command>().unwrap();
+            crt.exec(&command);
+        }
+        let ans = crt.get_display_status();
+        let expected = "##..##..##..##..##..##..##..##..##..##..
+        ###...###...###...###...###...###...###.
+        ####....####....####....####....####....
+        #####.....#####.....#####.....#####.....
+        ######......######......######......####
+        #######.......#######.......#######.....";
+        let expected: Vec<char> = expected
+            .lines()
+            .map(|line| line.trim())
+            .flat_map(|line| line.chars())
+            .collect();
+        assert_eq!(ans, expected)
     }
 
     fn get_sample_input() -> String {
