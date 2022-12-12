@@ -36,3 +36,5 @@ pub use day10::*;
 mod day11;
 mod day11_inputs;
 pub use day11::*;
+mod day12;
+pub use day12::*;
