@@ -1,10 +1,13 @@
 use super::Solution;
+use std::collections::VecDeque;
 
 pub struct Day12;
 
 impl Solution for Day12 {
     fn solve_part_1(input: String) -> String {
-        String::new()
+        let height_map = HeightMap::from(input);
+
+        height_map.shortest_path().to_string()
     }
 
     fn solve_part_2(input: String) -> String {
@@ -12,14 +15,111 @@ impl Solution for Day12 {
     }
 }
 
+struct HeightMap {
+    start: (usize, usize),
+    end: (usize, usize),
+    map: Vec<Vec<i8>>,
+}
+
+impl HeightMap {
+    fn from(input: String) -> Self {
+        let mut start = (0, 0);
+        let mut end = (0, 0);
+        let map = input
+            .lines()
+            .enumerate()
+            .map(|(r, line)| {
+                line.chars()
+                    .enumerate()
+                    .map(|(c, ch)| match ch {
+                        'S' => {
+                            start = (r, c);
+                            0
+                        }
+                        'E' => {
+                            end = (r, c);
+                            'z' as i8 - 'a' as i8
+                        }
+                        x => (x as i8) - ('a' as i8),
+                    })
+                    .collect()
+            })
+            .collect();
+        Self { start, end, map }
+    }
+
+    fn shortest_path(&self) -> usize {
+        let mut queue = VecDeque::new();
+        queue.push_back((self.start, 0));
+        let mut visited = vec![vec![false; self.map[0].len()]; self.map.len()];
+        visited[self.start.0][self.start.1] = true;
+        let mut count = 0;
+
+        while let Some(((r, c), dist)) = queue.pop_front() {
+            count += 1;
+            if (r, c) == self.end {
+                return dist;
+            }
+            for (nr, nc) in self.next_cell(r, c) {
+                if visited[nr][nc] {
+                    continue;
+                }
+                visited[nr][nc] = true;
+                queue.push_back(((nr, nc), dist + 1));
+            }
+        }
+        0
+    }
+
+    fn next_cell(&self, r: usize, c: usize) -> Vec<(usize, usize)> {
+        let mut ans = vec![];
+        let now = self.map[r][c];
+        if r > 0 {
+            let n = (r - 1, c);
+            if self.map[n.0][n.1] - now <= 1 {
+                ans.push(n);
+            }
+        }
+        if r < self.map.len() - 1 {
+            let n = (r + 1, c);
+            if self.map[n.0][n.1] - now <= 1 {
+                ans.push(n);
+            }
+        }
+        if c > 0 {
+            let n = (r, c - 1);
+            if self.map[n.0][n.1] - now <= 1 {
+                ans.push(n);
+            }
+        }
+        if c < self.map[0].len() - 1 {
+            let n = (r, c + 1);
+            if self.map[n.0][n.1] - now <= 1 {
+                ans.push(n);
+            }
+        }
+        ans
+    }
+}
+
 #[cfg(test)]
 mod day12_tests {
     use super::*;
 
+    fn get_sample_input() -> String {
+        String::from(
+            "Sabqponm
+abcryxxl
+accszExk
+acctuvwj
+abdefghi",
+        )
+    }
+
     #[test]
     fn part_1() {
-        let input = String::new();
-        assert_eq!(Day12::solve_part_1(input), String::new());
+        let input = get_sample_input();
+        assert_eq!(Day12::solve_part_1(input), "31");
     }
 
     #[test]
