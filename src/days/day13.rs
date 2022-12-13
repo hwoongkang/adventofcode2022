@@ -28,11 +28,27 @@ impl Solution for Day13 {
             .to_string()
     }
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let decoders: Vec<Packet> = vec!["[[2]]".parse().unwrap(), "[[6]]".parse().unwrap()];
+        let mut packets: Vec<Packet> = vec![];
+        for line in input.lines() {
+            if line != "" {
+                packets.push(line.parse().unwrap());
+            }
+        }
+        packets.append(&mut decoders.clone());
+        packets.sort();
+        let mut ans = 1;
+
+        for (ind, packet) in packets.iter().enumerate() {
+            if packet == &decoders[0] || packet == &decoders[1] {
+                ans *= ind + 1;
+            }
+        }
+        ans.to_string()
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone)]
 enum Packet {
     Integer(i32),
     List(Vec<Packet>),
@@ -63,6 +79,8 @@ impl PartialEq for Packet {
     }
 }
 
+impl Eq for Packet {}
+
 impl PartialOrd for Packet {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
@@ -84,6 +102,12 @@ impl PartialOrd for Packet {
                 self.partial_cmp(&Self::List(vec![Self::Integer(*b)]))
             }
         }
+    }
+}
+
+impl Ord for Packet {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
     }
 }
 
@@ -178,6 +202,7 @@ mod day13_tests {
     }
     #[test]
     fn part_2() {
-        assert_eq!(Day13::solve_part_2(String::new()), String::new());
+        let input = get_sample_input();
+        assert_eq!(Day13::solve_part_2(input), "140");
     }
 }
