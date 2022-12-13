@@ -28,24 +28,43 @@ impl Solution for Day13 {
             .to_string()
     }
     fn solve_part_2(input: String) -> String {
-        let decoders: Vec<Packet> = vec!["[[2]]".parse().unwrap(), "[[6]]".parse().unwrap()];
         let mut packets: Vec<Packet> = vec![];
         for line in input.lines() {
             if line != "" {
                 packets.push(line.parse().unwrap());
             }
         }
-        packets.append(&mut decoders.clone());
-        packets.sort();
-        let mut ans = 1;
 
-        for (ind, packet) in packets.iter().enumerate() {
-            if packet == &decoders[0] || packet == &decoders[1] {
-                ans *= ind + 1;
-            }
-        }
-        ans.to_string()
+        packets.sort();
+
+        let decoders: Vec<Packet> = vec!["[[2]]".parse().unwrap(), "[[6]]".parse().unwrap()];
+
+        decoders
+            .iter()
+            .map(|decoder| binary_search(&packets, decoder) + 1)
+            .enumerate()
+            // 뒤쪽 디코더는 앞쪽 디코더에 의해 밀려난 index가 반영되어야 함
+            .map(|(ind, num)| ind + num)
+            .fold(1, |a, b| a * b)
+            .to_string()
     }
+}
+
+fn binary_search<T: Ord>(list: &[T], target: &T) -> usize {
+    let mut start = 0;
+    let mut end = list.len() - 1;
+    while start <= end {
+        let mid = (start + end) / 2;
+        let el = &list[mid];
+        if el == target {
+            return mid;
+        } else if el < target {
+            start = mid + 1;
+        } else {
+            end = mid - 1;
+        }
+    }
+    return start;
 }
 
 #[derive(Clone)]
