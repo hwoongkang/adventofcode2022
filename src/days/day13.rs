@@ -4,7 +4,28 @@ pub struct Day13;
 
 impl Solution for Day13 {
     fn solve_part_1(input: String) -> String {
-        String::new()
+        let mut pairs: Vec<Vec<Packet>> = vec![vec![]];
+        for line in input.lines() {
+            if line == "" {
+                pairs.push(vec![]);
+            } else {
+                pairs.last_mut().unwrap().push(line.parse().unwrap());
+            }
+        }
+        pairs
+            .iter()
+            .enumerate()
+            .filter_map(|(ind, pair)| {
+                let a = &pair[0];
+                let b = &pair[1];
+                if a <= b {
+                    Some(ind + 1)
+                } else {
+                    None
+                }
+            })
+            .sum::<usize>()
+            .to_string()
     }
     fn solve_part_2(input: String) -> String {
         String::new()
@@ -28,6 +49,40 @@ impl std::str::FromStr for Packet {
                 Ok(Self::List(sub_packet))
             }
             _ => Ok(Self::Integer(s.parse().unwrap())),
+        }
+    }
+}
+
+impl PartialEq for Packet {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Integer(a), Self::Integer(b)) => a == b,
+            (Self::List(a), Self::List(b)) => a == b,
+            _ => false,
+        }
+    }
+}
+
+impl PartialOrd for Packet {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (Self::Integer(a), Self::Integer(b)) => a.partial_cmp(b),
+            (Self::List(a), Self::List(b)) => {
+                let l = a.len().min(b.len());
+                for i in 0..l {
+                    let cmp = a[i].partial_cmp(&b[i]);
+                    if cmp != Some(std::cmp::Ordering::Equal) {
+                        return cmp;
+                    }
+                }
+                a.len().partial_cmp(&b.len())
+            }
+            (Self::Integer(a), Self::List(_)) => {
+                Self::List(vec![Self::Integer(*a)]).partial_cmp(other)
+            }
+            (Self::List(_), Self::Integer(b)) => {
+                self.partial_cmp(&Self::List(vec![Self::Integer(*b)]))
+            }
         }
     }
 }
@@ -86,10 +141,7 @@ mod day13_tests {
 
     fn get_sample_input() -> String {
         String::from(
-            "[9]
-[10]
-
-[1,1,3,1,1]
+            "[1,1,3,1,1]
 [1,1,5,1,1]
 
 [[1],[2,3,4]]
@@ -117,17 +169,12 @@ mod day13_tests {
     #[test]
     fn part_1() {
         let input = get_sample_input();
-        for line in input.lines() {
-            if line == "" {
-                continue;
-            }
-            let packet: Packet = match line.parse() {
-                Ok(p) => p,
-                Err(_) => Packet::Integer(-1),
-            };
-            println!("{:?}", packet);
-        }
-        assert_eq!(Day13::solve_part_1(String::new()), String::new());
+        assert_eq!(Day13::solve_part_1(input), "13");
+    }
+
+    #[test]
+    fn partial_ord() {
+        assert_eq!(2.partial_cmp(&3), Some(std::cmp::Ordering::Less));
     }
     #[test]
     fn part_2() {
