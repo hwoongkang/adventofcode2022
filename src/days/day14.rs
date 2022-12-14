@@ -18,7 +18,12 @@ impl Solution for Day14 {
     }
 
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let mut cave = Cave::from(&input);
+        let mut ans = 0;
+        while !cave.add_sand_v2() {
+            ans += 1;
+        }
+        ans.to_string()
     }
 }
 
@@ -47,6 +52,14 @@ impl Cave {
             highest: 0,
             walls: HashSet::new(),
         }
+    }
+
+    fn from(input: &str) -> Self {
+        let mut cave = Self::new();
+        for line in input.lines() {
+            cave.add_wall(line);
+        }
+        cave
     }
 
     fn add_wall(&mut self, input: &str) {
@@ -93,6 +106,32 @@ impl Cave {
             return false;
         }
     }
+
+    fn add_sand_v2(&mut self) -> bool {
+        let mut sand = Point(500, 0);
+        if self.walls.contains(&sand) {
+            return true;
+        }
+
+        'sand_loop: loop {
+            let next_points = [
+                Point(sand.0, sand.1 + 1),
+                Point(sand.0 - 1, sand.1 + 1),
+                Point(sand.0 + 1, sand.1 + 1),
+            ];
+            for point in next_points {
+                let blocked_by_wall = self.walls.contains(&point);
+                let blocked_by_bottom = point.1 == self.highest + 2;
+                if !(blocked_by_bottom || blocked_by_wall) {
+                    sand = point;
+                    continue 'sand_loop;
+                }
+            }
+
+            self.walls.insert(sand);
+            return false;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -111,6 +150,13 @@ mod day14_tests {
         let input = get_sample_input();
         let ans = Day14::solve_part_1(input);
         let expected = "24";
+        assert_eq!(ans, expected);
+    }
+    #[test]
+    fn test_part_2() {
+        let input = get_sample_input();
+        let ans = Day14::solve_part_2(input);
+        let expected = "93";
         assert_eq!(ans, expected);
     }
 }
