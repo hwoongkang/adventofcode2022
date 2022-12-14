@@ -1,7 +1,7 @@
 mod days;
 use days::*;
 
-type Today = Day13;
+type Today = Day14;
 
 fn main() {
     let input = read_input("input.txt");
