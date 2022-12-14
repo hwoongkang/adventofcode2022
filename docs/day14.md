@@ -14,6 +14,17 @@
 
 다행히 그냥 화살표로 나뉘어져 있어서 `line.split("->").map(|w| w.trim()).foobar()`로 처리하면 됩니다.
 
+이번 문제 풀이에서 제가 짠 코드 중 제일 맘에 드는 부분은 점들로부터 점들 사이를 잇는 선분을 도출하는 부분입니다:
+
+```Rust
+let mut points: Vec<Point> = ...collect();
+for (p1, p2) in points.iter().zip(points.iter().skip(1)) {
+    // snip
+}
+```
+
+`zip`은 먼저 소진되는 Iterator만큼만 반복된다는 점을 활용했습니다.
+
 ## 구조 짜기
 
 종종 나오는 2차원 그래프에서 '벽'이 존재하는 문제입니다.
