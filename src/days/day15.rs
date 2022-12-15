@@ -6,14 +6,14 @@ pub struct Day15;
 
 impl Solution for Day15 {
     fn solve_part_1(input: String) -> String {
-        part_1_v2(input, 2_000_000).to_string()
+        part_1(input, 2_000_000).to_string()
     }
     fn solve_part_2(input: String) -> String {
-        String::new()
+        part_2(input, 4_000_000).to_string()
     }
 }
 
-fn part_1(input: String, at_y: i64) -> usize {
+fn _part_1_legacy(input: String, at_y: i64) -> usize {
     let sensors: Vec<Sensor> = input.lines().map(|l| l.parse().unwrap()).collect();
     let mut seen: HashSet<i64> = HashSet::new();
     for sensor in sensors.iter() {
@@ -37,8 +37,41 @@ fn part_1(input: String, at_y: i64) -> usize {
     seen.len()
 }
 
-fn part_1_v2(input: String, at_y: i64) -> usize {
+fn part_1(input: String, at_y: i64) -> usize {
     let sensors: Vec<Sensor> = input.lines().map(|l| l.parse().unwrap()).collect();
+    let mut r = impossible_points(&sensors, at_y);
+    for beacon in sensors.iter().map(|s| &s.closest_beacon) {
+        if beacon.1 == at_y {
+            r.subtract(Range {
+                start: beacon.0,
+                end: beacon.0,
+            });
+        }
+    }
+    r.len()
+}
+
+fn part_2(input: String, max: i64) -> String {
+    let sensors: Vec<Sensor> = input.lines().map(|l| l.parse().unwrap()).collect();
+    for row in 0..max {
+        if row % (max / 10) == 0 {
+            println!("{} %...", row * 100 / max);
+        }
+        let r = impossible_points(&sensors, row);
+        let mut candidates = MultiRange::from(Range { start: 0, end: max });
+        for range in r.ranges {
+            candidates.subtract(range);
+        }
+        if candidates != MultiRange::new() {
+            let x = candidates.ranges[0].start;
+            let y = row;
+            return (4_000_000 * x + y).to_string();
+        }
+    }
+    String::new()
+}
+
+fn impossible_points(sensors: &[Sensor], at_y: i64) -> MultiRange {
     let mut r = MultiRange::new();
     for sensor in sensors.iter() {
         let dist = sensor.pos.distance(&sensor.closest_beacon);
@@ -52,15 +85,7 @@ fn part_1_v2(input: String, at_y: i64) -> usize {
             end: sensor.pos.0 + dx,
         });
     }
-    for beacon in sensors.iter().map(|s| &s.closest_beacon) {
-        if beacon.1 == at_y {
-            r.subtract(Range {
-                start: beacon.0,
-                end: beacon.0,
-            });
-        }
-    }
-    r.len()
+    r
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -372,8 +397,15 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3",
     #[test]
     fn test_part_1() {
         let input = get_sample_input();
-        let ans = part_1_v2(input, 10).to_string();
+        let ans = part_1(input, 10).to_string();
         let expected = String::from("26");
+        assert_eq!(ans, expected)
+    }
+    #[test]
+    fn test_part_2() {
+        let input = get_sample_input();
+        let ans = part_2(input, 20);
+        let expected = String::from("56000011");
         assert_eq!(ans, expected)
     }
 }
