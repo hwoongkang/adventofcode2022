@@ -6,7 +6,7 @@ pub struct Day15;
 
 impl Solution for Day15 {
     fn solve_part_1(input: String) -> String {
-        part_1(input, 2_000_000).to_string()
+        part_1_v2(input, 2_000_000).to_string()
     }
     fn solve_part_2(input: String) -> String {
         String::new()
