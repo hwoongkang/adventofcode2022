@@ -196,7 +196,6 @@ impl MultiRange {
     }
 
     fn subtract(&mut self, other: Range) {
-        let loc = binary_search(&self.ranges, &other);
         self.ranges = self
             .ranges
             .drain(..)
