@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::Solution;
 
 pub struct Day17;
@@ -10,20 +12,14 @@ impl Solution for Day17 {
         for _ in 0..2022 {
             tetris.add_block();
         }
-
         tetris.height.to_string()
     }
 
     fn solve_part_2(input: String) -> String {
         let mut tetris = Tetris::from(&input);
-        for i in 0u64..1_000_000_000_000 {
-            if i % 1_000_000 == 0 {
-                println!("{}%...", i / 10_000_000_000);
-            }
-            tetris.add_block();
-        }
-
-        tetris.height.to_string()
+        tetris
+            .add_blocks_and_get_height(1_000_000_000_000)
+            .to_string()
     }
 }
 
@@ -102,7 +98,7 @@ impl Block {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq)]
 enum BlockTypes {
     Horizontal,
     Cross,
@@ -134,6 +130,13 @@ impl BlockTypes {
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Hash)]
+struct CycleDetection {
+    jet_index: usize,
+    block_type: BlockTypes,
+    ceiling: [bool; 7],
+}
+
 #[derive(Debug)]
 enum Jet {
     Left,
@@ -158,6 +161,8 @@ struct Tetris {
     jet_pattern: Vec<Jet>,
     jet_index: usize,
     block_index: usize,
+    cache: HashMap<CycleDetection, usize>,
+    block_count: usize,
 }
 
 impl Tetris {
@@ -174,10 +179,48 @@ impl Tetris {
             jet_pattern,
             jet_index,
             block_index,
+            cache: HashMap::new(),
+            block_count: 0,
         }
     }
 
-    fn add_block(&mut self) {
+    fn add_blocks_and_get_height(&mut self, num_blocks: usize) -> usize {
+        let prev_count = loop {
+            if let Some(prev_count) = self.add_block() {
+                break prev_count;
+            }
+        };
+        let prev_height = self.height;
+
+        let cycle_length = self.block_count - prev_count;
+
+        println!("{}, {}", prev_count, cycle_length);
+
+        for _ in 0..cycle_length {
+            self.add_block();
+        }
+
+        let height = self.height;
+
+        let delta_height = height - prev_height;
+
+        let count = self.block_count;
+
+        let remaining = num_blocks - count;
+
+        for _ in 0..remaining % cycle_length {
+            self.add_block();
+        }
+
+        let mut ans = self.height;
+
+        ans += delta_height * (remaining / cycle_length);
+
+        ans
+    }
+
+    fn add_block(&mut self) -> Option<usize> {
+        self.block_count += 1;
         let block_type = BlockTypes::nth(self.block_index);
         self.block_index += 1;
 
@@ -208,9 +251,22 @@ impl Tetris {
             self.grid[y][x] = true;
         }
         self.height = self.height.max(block.origin.1 + 1);
+
+        let ceiling = self.grid[self.height - 1].clone();
+        let cycle_detection = CycleDetection {
+            jet_index: self.jet_index % self.jet_pattern.len(),
+            block_type: block.block_type,
+            ceiling,
+        };
+        if let Some(&prev_block_count) = self.cache.get(&cycle_detection) {
+            Some(prev_block_count)
+        } else {
+            self.cache.insert(cycle_detection, self.block_count);
+            None
+        }
     }
 
-    fn pretty_print(&self) {
+    fn _pretty_print(&self) {
         for row in self.grid.iter().rev() {
             for &cell in row.iter() {
                 if cell {
