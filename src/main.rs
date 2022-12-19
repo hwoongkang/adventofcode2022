@@ -3,7 +3,7 @@ use days::*;
 
 use std::time;
 
-type Today = Day17;
+type Today = Day18;
 
 fn with_elapsed_time<T>(f: &dyn Fn() -> T) -> (time::Duration, T) {
     let now = time::Instant::now();
