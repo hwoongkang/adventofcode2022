@@ -9,7 +9,9 @@ impl Solution for Day18 {
     }
 
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let mut grid = Grid::from(&input);
+        grid.mark_air_pockets();
+        grid.surface_area().to_string()
     }
 }
 
@@ -100,6 +102,32 @@ impl Grid {
         }
         ans
     }
+
+    fn mark_air_pockets(&mut self) {
+        let mut visited = vec![vec![vec![false; self.size.2]; self.size.1]; self.size.0];
+        let mut stack = vec![Point(0, 0, 0)];
+        while let Some(point) = stack.pop() {
+            if visited[point.0][point.1][point.2] {
+                continue;
+            }
+            visited[point.0][point.1][point.2] = true;
+            if self.grid[point.0][point.1][point.2] {
+                continue;
+            }
+            for p in self.adjacent_points(point) {
+                stack.push(p);
+            }
+        }
+        for x in 0..self.size.0 {
+            for y in 0..self.size.1 {
+                for z in 0..self.size.2 {
+                    if !visited[x][y][z] {
+                        self.grid[x][y][z] = true;
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -147,7 +175,7 @@ mod day18_tests {
     fn part2() {
         let input = get_sample_input();
         let ans = Day18::solve_part_2(input);
-        let expected = "";
+        let expected = "58";
         assert_eq!(ans, expected);
     }
 }
