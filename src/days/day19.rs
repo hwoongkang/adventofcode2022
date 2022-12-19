@@ -27,13 +27,14 @@ type State = (PerResource, PerResource);
 #[derive(Debug)]
 struct Blueprint {
     costs: (u32, u32, (u32, u32), (u32, u32)),
+    max_ore_cost: u32,
 }
 
 impl Blueprint {
     fn maximize(&self) -> u32 {
         let mut dp: Vec<Vec<State>> = vec![vec![([1, 0, 0, 0], [0; 4])]];
 
-        for i in 0..8 {
+        for i in 0..24 {
             let prev_states = &dp[dp.len() - 1];
 
             println!("processing {} minutes... length: {}", i, prev_states.len());
@@ -41,7 +42,7 @@ impl Blueprint {
 
             for &(robots, stocks) in prev_states.iter() {
                 let mut branches: Vec<State> = self
-                    .possible_buildings(stocks)
+                    .possible_buildings((robots, stocks))
                     .iter()
                     .map(|(r, s)| {
                         let mut new_robots = robots;
@@ -63,15 +64,16 @@ impl Blueprint {
                 next_states.append(&mut branches);
             }
 
-            println!("{:?}", next_states);
-
             dp.push(next_states);
         }
 
         dp.last().unwrap().iter().map(|(_, s)| s[3]).max().unwrap()
     }
 
-    fn possible_buildings(&self, stocks: PerResource) -> Vec<(PerResource, PerResource)> {
+    fn possible_buildings(
+        &self,
+        (robots, stocks): (PerResource, PerResource),
+    ) -> Vec<(PerResource, PerResource)> {
         let ores = |stocks: PerResource| stocks[0] / self.costs.0;
 
         let clays = |stocks: PerResource| stocks[0] / self.costs.1;
@@ -92,32 +94,39 @@ impl Blueprint {
 
         let mut ans = vec![];
 
-        let max_ores = ores(stocks);
+        let max_geodes = geodes(stocks);
 
-        for ore in 0..=max_ores {
+        for geode in 1.min(max_geodes)..=max_geodes {
             let mut stock = stocks.clone();
-            stock[0] -= ore * self.costs.0;
+            stock[0] -= geode * self.costs.3 .0;
+            stock[2] -= geode * self.costs.3 .1;
 
-            let max_clays = clays(stock);
+            let max_obsidians = obsidians(stock);
 
-            for clay in 0..=max_clays {
+            for obsidian in 1.min(max_obsidians)..=max_obsidians {
                 let mut stock = stock.clone();
+                stock[0] -= obsidian * self.costs.2 .0;
+                stock[1] -= obsidian * self.costs.2 .1;
 
-                stock[0] -= clay * self.costs.1;
+                let ores = if self.costs.0 > 3 {
+                    0..=0
+                } else {
+                    0..=ores(stock)
+                };
 
-                let max_obsidians = obsidians(stock);
-
-                for obsidian in 0..=max_obsidians {
+                for ore in ores {
                     let mut stock = stock.clone();
-                    stock[0] -= obsidian * self.costs.2 .0;
-                    stock[1] -= obsidian * self.costs.2 .1;
+                    stock[0] -= ore * self.costs.0;
 
-                    let max_geodes = geodes(stock);
+                    let clays = if robots[1] >= 4 {
+                        0..=0
+                    } else {
+                        0..=clays(stock)
+                    };
 
-                    for geode in 0..=max_geodes {
+                    for clay in clays {
                         let mut stock = stock.clone();
-                        stock[0] -= geode * self.costs.3 .0;
-                        stock[2] -= geode * self.costs.3 .1;
+                        stock[0] -= clay * self.costs.1;
 
                         ans.push(([ore, clay, obsidian, geode], stock));
                     }
@@ -137,7 +146,8 @@ impl std::str::FromStr for Blueprint {
             .split('.')
             .map(|s| s.split_whitespace().collect())
             .collect();
-        let ore_robot;
+
+        let ore_robot: u32;
         let clay_robot;
         let obsidian_robot;
         let geode_robot;
@@ -164,8 +174,14 @@ impl std::str::FromStr for Blueprint {
             geode[geode.len() - 2].parse().unwrap(),
         );
 
+        let max_ore_cost = ore_robot
+            .max(clay_robot)
+            .max(obsidian_robot.0)
+            .max(geode_robot.0);
+
         Ok(Self {
             costs: (ore_robot, clay_robot, obsidian_robot, geode_robot),
+            max_ore_cost,
         })
     }
 }
