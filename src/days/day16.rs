@@ -1,9 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    ops::DivAssign,
-    rc::{Rc, Weak},
-};
+use std::collections::HashMap;
 
 use super::Solution;
 
@@ -11,17 +6,17 @@ pub struct Day16;
 
 impl Solution for Day16 {
     fn solve_part_1(input: String) -> String {
-        let mut cave = Cave::from(input);
+        let cave = Cave::from(input);
         cave.part_1().to_string()
     }
 
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let cave = Cave::from(input);
+        cave.part_2().to_string()
     }
 }
 
 struct Cave {
-    connections: HashMap<String, Vec<String>>,
     flow_rates: HashMap<String, usize>,
     bit_masks: HashMap<String, usize>,
     distances: HashMap<String, HashMap<String, usize>>,
@@ -29,7 +24,7 @@ struct Cave {
 
 impl Cave {
     fn from(input: String) -> Self {
-        let mut valves: Vec<(String, usize, Vec<String>)> = input
+        let valves: Vec<(String, usize, Vec<String>)> = input
             .lines()
             .map(|line| {
                 let words: Vec<&str> = line.split_whitespace().collect();
@@ -95,7 +90,6 @@ impl Cave {
             }
         }
         Self {
-            connections,
             flow_rates,
             bit_masks,
             distances,
@@ -106,6 +100,27 @@ impl Cave {
         let mut ans: HashMap<usize, usize> = HashMap::new();
         self.visit("AA", 30, 0, 0, &mut ans);
         *ans.values().max().unwrap()
+    }
+
+    fn part_2(&self) -> usize {
+        let mut visited = HashMap::new();
+        self.visit("AA", 26, 0, 0, &mut visited);
+        visited
+            .clone()
+            .iter()
+            .flat_map(|(k2, v2)| {
+                visited.iter().filter_map(
+                    move |(k1, v1)| {
+                        if k1 & k2 == 0 {
+                            Some(v1 + v2)
+                        } else {
+                            None
+                        }
+                    },
+                )
+            })
+            .max()
+            .unwrap_or(0)
     }
 
     fn visit(
@@ -167,6 +182,13 @@ Valve JJ has flow rate=21; tunnel leads to valve II",
         let input = get_sample_input();
         let ans = Day16::solve_part_1(input);
         let expected = "1651";
+        assert_eq!(ans, expected)
+    }
+    #[test]
+    fn test_part_2() {
+        let input = get_sample_input();
+        let ans = Day16::solve_part_2(input);
+        let expected = "1707";
         assert_eq!(ans, expected)
     }
 }
