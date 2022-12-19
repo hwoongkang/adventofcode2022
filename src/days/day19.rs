@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::Solution;
 
 pub struct Day19;
@@ -53,34 +51,13 @@ impl Blueprint {
     fn maximize(&self, minutes: usize) -> u32 {
         let mut dp: Vec<Vec<State>> = vec![vec![([1, 0, 0, 0], [0; 4])]];
 
-        for i in 0..minutes {
+        for _ in 0..minutes {
             let prev_states = &dp[dp.len() - 1];
 
             let mut next_states = vec![];
 
             for &(robots, stocks) in prev_states.iter() {
-                let mut branches: Vec<State> = self
-                    .possible_buildings((robots, stocks))
-                    .iter()
-                    .map(|(dr, ds)| {
-                        let mut r = robots;
-                        let mut s = stocks;
-
-                        for i in 0..4 {
-                            r[i] += dr[i];
-                            s[i] -= ds[i];
-                        }
-
-                        (r, s)
-                    })
-                    .map(|(r, mut s)| {
-                        for (i, num) in robots.iter().enumerate() {
-                            s[i] += num;
-                        }
-
-                        (r, s)
-                    })
-                    .collect();
+                let mut branches: Vec<State> = self.possible_buildings((robots, stocks));
 
                 next_states.append(&mut branches);
             }
@@ -120,7 +97,19 @@ impl Blueprint {
 
         ans.push(([0, 0, 0, 0], [0, 0, 0, 0]));
 
-        ans
+        ans.iter()
+            .map(|(dr, ds)| {
+                let mut r = [0; 4];
+                let mut s = [0; 4];
+
+                for i in 0..4 {
+                    s[i] = stocks[i] - ds[i] + robots[i];
+                    r[i] = robots[i] + dr[i];
+                }
+
+                (r, s)
+            })
+            .collect()
     }
 }
 
