@@ -7,16 +7,23 @@ const CHAMBER_WIDTH: usize = 7;
 impl Solution for Day17 {
     fn solve_part_1(input: String) -> String {
         let mut tetris = Tetris::from(&input);
-        for _ in 0..12 {
+        for _ in 0..2022 {
             tetris.add_block();
         }
 
-        tetris.pretty_print();
         tetris.height.to_string()
     }
 
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let mut tetris = Tetris::from(&input);
+        for i in 0u64..1_000_000_000_000 {
+            if i % 1_000_000 == 0 {
+                println!("{}%...", i / 10_000_000_000);
+            }
+            tetris.add_block();
+        }
+
+        tetris.height.to_string()
     }
 }
 
@@ -200,7 +207,7 @@ impl Tetris {
             let Pos(x, y) = pos;
             self.grid[y][x] = true;
         }
-        self.height = block.origin.1 + 1;
+        self.height = self.height.max(block.origin.1 + 1);
     }
 
     fn pretty_print(&self) {
@@ -238,7 +245,7 @@ mod day17_tests {
     fn part2() {
         let input = get_sample_input();
         let ans = Day17::solve_part_2(input);
-        let expected = "";
+        let expected = "1514285714288";
         assert_eq!(ans, expected);
     }
 }
