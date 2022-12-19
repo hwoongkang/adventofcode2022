@@ -10,7 +10,7 @@ impl Solution for Day19 {
 
         blueprints
             .iter()
-            .map(|b| b.maximize())
+            .map(|b| b.maximize(24))
             .enumerate()
             .map(|(i, b)| ((i + 1) as u32) * b)
             .sum::<u32>()
@@ -18,7 +18,13 @@ impl Solution for Day19 {
     }
 
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let blueprints: Vec<Blueprint> =
+            input.lines().take(3).map(|l| l.parse().unwrap()).collect();
+        blueprints
+            .iter()
+            .map(|b| b.maximize(32))
+            .fold(1, |a, b| a * b)
+            .to_string()
     }
 }
 
@@ -26,23 +32,31 @@ type PerResource = [u32; 4];
 
 type State = (PerResource, PerResource);
 
+fn compare_state(s1: &State, s2: &State) -> std::cmp::Ordering {
+    let (r1, s1) = s1;
+    let (r2, s2) = s2;
+    for i in (0..4).rev() {
+        match (s2[i] + r2[i]).cmp(&(s1[i] + r1[i])) {
+            std::cmp::Ordering::Equal => continue,
+            o => return o,
+        }
+    }
+    std::cmp::Ordering::Equal
+}
+
 #[derive(Debug)]
 struct Blueprint {
     costs: (u32, u32, (u32, u32), (u32, u32)),
-    max_ore_cost: u32,
 }
 
 impl Blueprint {
-    fn maximize(&self) -> u32 {
+    fn maximize(&self, minutes: usize) -> u32 {
         let mut dp: Vec<Vec<State>> = vec![vec![([1, 0, 0, 0], [0; 4])]];
 
-        for i in 0..24 {
-            println!("processing {}th iteration: {}", i, dp.last().unwrap().len());
+        for i in 0..minutes {
             let prev_states = &dp[dp.len() - 1];
 
             let mut next_states = vec![];
-
-            let mut flag = false;
 
             for &(robots, stocks) in prev_states.iter() {
                 let mut branches: Vec<State> = self
@@ -57,10 +71,6 @@ impl Blueprint {
                             s[i] -= ds[i];
                         }
 
-                        if dr[3] > 0 {
-                            flag = true;
-                        }
-
                         (r, s)
                     })
                     .map(|(r, mut s)| {
@@ -72,21 +82,18 @@ impl Blueprint {
                     })
                     .collect();
 
-                if flag {
-                    branches = branches
-                        .iter()
-                        .filter_map(|(r, s)| if r[3] > 0 { Some((*r, *s)) } else { None })
-                        .collect();
-                }
                 next_states.append(&mut branches);
             }
+
+            next_states.sort_by(compare_state);
+
+            next_states.truncate(5000);
 
             dp.push(next_states);
         }
 
         let ans = dp.last().unwrap().iter().map(|(_, s)| s[3]).max().unwrap();
 
-        println!("{}", ans);
         ans
     }
 
@@ -98,14 +105,12 @@ impl Blueprint {
 
         if stocks[0] >= self.costs.3 .0 && stocks[2] >= self.costs.3 .1 {
             ans.push(([0, 0, 0, 1], [self.costs.3 .0, 0, self.costs.3 .1, 0]));
-            return ans;
         }
         if stocks[0] >= self.costs.2 .0 && stocks[1] >= self.costs.2 .1 {
             ans.push(([0, 0, 1, 0], [self.costs.2 .0, self.costs.2 .1, 0, 0]));
-            return ans;
         }
 
-        if stocks[0] >= self.costs.0 && robots[0] <= 4 {
+        if stocks[0] >= self.costs.0 {
             ans.push(([1, 0, 0, 0], [self.costs.0, 0, 0, 0]));
         }
 
@@ -155,14 +160,8 @@ impl std::str::FromStr for Blueprint {
             geode[geode.len() - 2].parse().unwrap(),
         );
 
-        let max_ore_cost = ore_robot
-            .max(clay_robot)
-            .max(obsidian_robot.0)
-            .max(geode_robot.0);
-
         Ok(Self {
             costs: (ore_robot, clay_robot, obsidian_robot, geode_robot),
-            max_ore_cost,
         })
     }
 }
@@ -196,7 +195,7 @@ Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsid
     fn part2() {
         let input = get_sample_input();
         let ans = Day19::solve_part_2(input);
-        let expected = "";
+        let expected = (56 * 62).to_string();
         assert_eq!(ans, expected);
     }
 }
