@@ -11,6 +11,8 @@ impl Solution for Day19 {
         blueprints
             .iter()
             .map(|b| b.maximize())
+            .enumerate()
+            .map(|(i, b)| ((i + 1) as u32) * b)
             .sum::<u32>()
             .to_string()
     }
@@ -35,22 +37,31 @@ impl Blueprint {
         let mut dp: Vec<Vec<State>> = vec![vec![([1, 0, 0, 0], [0; 4])]];
 
         for i in 0..24 {
+            println!("processing {}th iteration: {}", i, dp.last().unwrap().len());
             let prev_states = &dp[dp.len() - 1];
 
-            println!("processing {} minutes... length: {}", i, prev_states.len());
             let mut next_states = vec![];
+
+            let mut flag = false;
 
             for &(robots, stocks) in prev_states.iter() {
                 let mut branches: Vec<State> = self
                     .possible_buildings((robots, stocks))
                     .iter()
-                    .map(|(r, s)| {
-                        let mut new_robots = robots;
+                    .map(|(dr, ds)| {
+                        let mut r = robots;
+                        let mut s = stocks;
+
                         for i in 0..4 {
-                            new_robots[i] += r[i];
+                            r[i] += dr[i];
+                            s[i] -= ds[i];
                         }
 
-                        (new_robots, *s)
+                        if dr[3] > 0 {
+                            flag = true;
+                        }
+
+                        (r, s)
                     })
                     .map(|(r, mut s)| {
                         for (i, num) in robots.iter().enumerate() {
@@ -61,78 +72,48 @@ impl Blueprint {
                     })
                     .collect();
 
+                if flag {
+                    branches = branches
+                        .iter()
+                        .filter_map(|(r, s)| if r[3] > 0 { Some((*r, *s)) } else { None })
+                        .collect();
+                }
                 next_states.append(&mut branches);
             }
 
             dp.push(next_states);
         }
 
-        dp.last().unwrap().iter().map(|(_, s)| s[3]).max().unwrap()
+        let ans = dp.last().unwrap().iter().map(|(_, s)| s[3]).max().unwrap();
+
+        println!("{}", ans);
+        ans
     }
 
     fn possible_buildings(
         &self,
         (robots, stocks): (PerResource, PerResource),
     ) -> Vec<(PerResource, PerResource)> {
-        let ores = |stocks: PerResource| stocks[0] / self.costs.0;
-
-        let clays = |stocks: PerResource| stocks[0] / self.costs.1;
-
-        let obsidians = |stocks: PerResource| {
-            let max_by_ores = stocks[0] / self.costs.2 .0;
-            let max_by_clays = stocks[1] / self.costs.2 .1;
-
-            max_by_ores.min(max_by_clays)
-        };
-
-        let geodes = |stocks: PerResource| {
-            let max_by_ores = stocks[0] / self.costs.3 .0;
-            let max_by_obsidians = stocks[2] / self.costs.3 .1;
-
-            max_by_ores.min(max_by_obsidians)
-        };
-
         let mut ans = vec![];
 
-        let max_geodes = geodes(stocks);
-
-        for geode in 1.min(max_geodes)..=max_geodes {
-            let mut stock = stocks.clone();
-            stock[0] -= geode * self.costs.3 .0;
-            stock[2] -= geode * self.costs.3 .1;
-
-            let max_obsidians = obsidians(stock);
-
-            for obsidian in 1.min(max_obsidians)..=max_obsidians {
-                let mut stock = stock.clone();
-                stock[0] -= obsidian * self.costs.2 .0;
-                stock[1] -= obsidian * self.costs.2 .1;
-
-                let ores = if self.costs.0 > 3 {
-                    0..=0
-                } else {
-                    0..=ores(stock)
-                };
-
-                for ore in ores {
-                    let mut stock = stock.clone();
-                    stock[0] -= ore * self.costs.0;
-
-                    let clays = if robots[1] >= 4 {
-                        0..=0
-                    } else {
-                        0..=clays(stock)
-                    };
-
-                    for clay in clays {
-                        let mut stock = stock.clone();
-                        stock[0] -= clay * self.costs.1;
-
-                        ans.push(([ore, clay, obsidian, geode], stock));
-                    }
-                }
-            }
+        if stocks[0] >= self.costs.3 .0 && stocks[2] >= self.costs.3 .1 {
+            ans.push(([0, 0, 0, 1], [self.costs.3 .0, 0, self.costs.3 .1, 0]));
+            return ans;
         }
+        if stocks[0] >= self.costs.2 .0 && stocks[1] >= self.costs.2 .1 {
+            ans.push(([0, 0, 1, 0], [self.costs.2 .0, self.costs.2 .1, 0, 0]));
+            return ans;
+        }
+
+        if stocks[0] >= self.costs.0 && robots[0] <= 4 {
+            ans.push(([1, 0, 0, 0], [self.costs.0, 0, 0, 0]));
+        }
+
+        if stocks[0] >= self.costs.1 {
+            ans.push(([0, 1, 0, 0], [self.costs.1, 0, 0, 0]));
+        }
+
+        ans.push(([0, 0, 0, 0], [0, 0, 0, 0]));
 
         ans
     }
