@@ -4,185 +4,54 @@ pub struct Day20;
 
 impl Solution for Day20 {
     fn solve_part_1(input: String) -> String {
-        let mut dll = DoublyLinkedList2::from(&input, 1);
-
-        dll.mix();
-
-        dll.ans().to_string()
+        solve(input, 1, 1)
     }
 
     fn solve_part_2(input: String) -> String {
-        let mut dll = DoublyLinkedList2::from(&input, 811589153);
-
-        for _ in 0..10 {
-            dll.mix();
-        }
-
-        dll.ans().to_string()
+        solve(input, 811589153, 10)
     }
 }
 
-#[derive(Debug)]
-struct Node {
-    prev: usize,
-    next: usize,
-    value: i64,
-}
-
-struct DoublyLinkedList2 {
-    nums: Vec<i64>,
-    indices: Vec<usize>,
-}
-
-impl DoublyLinkedList2 {
-    fn from(input: &str, key: i64) -> Self {
-        let nums: Vec<i64> = input
-            .lines()
-            .map(|l| l.parse::<i64>().unwrap())
-            .map(|n| n * key)
-            .collect();
-        let indices = (0..nums.len()).collect();
-        Self { nums, indices }
-    }
-
-    fn mix(&mut self) {
-        let l = self.indices.len();
+fn solve(input: String, key: i64, iter: usize) -> String {
+    let nums: Vec<i64> = input.lines().map(|n| n.parse().unwrap()).collect();
+    let nums: Vec<i64> = nums.iter().map(|&n| n * key).collect();
+    let mut indices: Vec<usize> = (0..nums.len()).collect();
+    let l = nums.len();
+    for _ in 0..iter {
         for i in 0..l {
-            println!("{}, {:?}", i, self.indices);
-            let j = self.indices.iter().position(|&n| n == i).unwrap();
+            let curr_index = indices.iter().position(|&x| x == i).unwrap();
+            indices.remove(curr_index);
 
-            self.indices.remove(j);
+            let num = nums[i];
 
-            let num = self.nums[i];
-
-            let k = match num.signum() {
-                1 => (j + num as usize) % l,
-                -1 => (j + 10 * l - (num.abs() as usize) % l) % l,
-                _ => j,
+            let new_index = match num.signum() {
+                0 => curr_index,
+                1 => (curr_index + num as usize) % (l - 1),
+                -1 => rem(curr_index as i64 + num, l - 1),
+                _ => unreachable!(),
             };
 
-            self.indices.insert(k, i);
+            indices.insert(new_index, i);
         }
     }
-
-    fn ans(&self) -> i64 {
-        let index_zero = self.nums.iter().position(|&n| n == 0).unwrap();
-        let zero = self.indices.iter().position(|&i| i == index_zero).unwrap();
-        (1..=3)
-            .map(|p| {
-                let i = (zero + p) % self.nums.len();
-                self.nums[self.indices[i]]
-            })
-            .sum()
-    }
+    let zero = nums.iter().position(|&x| x == 0).unwrap();
+    let zero_index = indices.iter().position(|&x| x == zero).unwrap();
+    (1..=3)
+        .map(|n| nums[indices[(zero_index + n * 1000) % l]])
+        .map(|n| {
+            println!("{}", n);
+            n
+        })
+        .sum::<i64>()
+        .to_string()
 }
 
-#[derive(Debug)]
-struct DoublyLinkedList {
-    nodes: Vec<Node>,
-}
-
-impl DoublyLinkedList {
-    fn from(input: &str) -> Self {
-        let mut nodes: Vec<Node> = input
-            .lines()
-            .map(|l| l.parse().unwrap())
-            .map(|value| Node {
-                prev: 0,
-                next: 0,
-                value,
-            })
-            .collect();
-        let l = nodes.len();
-        for j in 0..nodes.len() {
-            let i = (j + l - 1) % l;
-            let k = (j + 1) % l;
-            nodes[j].prev = i;
-            nodes[j].next = k;
-        }
-        Self { nodes }
-    }
-
-    fn _print(&self) -> String {
-        let mut nums: Vec<i64> = vec![];
-        let mut head = 0;
-        let returned = head;
-        loop {
-            nums.push(self.nodes[head].value);
-            head = self.nodes[head].next;
-            if head == returned {
-                break;
-            }
-        }
-
-        nums.iter()
-            .map(|n| n.to_string())
-            .collect::<Vec<String>>()
-            .join(", ")
-    }
-
-    fn tick(&mut self, at: usize) {
-        let head = at;
-        let val = self.nodes[head].value;
-        match val.signum() {
-            1 => {
-                for _ in 0..val {
-                    let j = head;
-                    let i = self.nodes[j].prev;
-                    let k = self.nodes[j].next;
-                    let l = self.nodes[k].next;
-
-                    // i j k l
-                    // becomes
-                    // i k j l
-
-                    self.nodes[k].prev = i;
-                    self.nodes[j].prev = k;
-                    self.nodes[l].prev = j;
-
-                    self.nodes[i].next = k;
-                    self.nodes[k].next = j;
-                    self.nodes[j].next = l;
-                }
-            }
-            -1 => {
-                for _ in 0..(-val) {
-                    let j = head;
-                    let i = self.nodes[j].prev;
-                    let h = self.nodes[i].prev;
-                    let k = self.nodes[j].next;
-
-                    // h i j k
-                    // becomes
-                    // h j i k
-
-                    self.nodes[j].prev = h;
-                    self.nodes[i].prev = j;
-                    self.nodes[k].prev = i;
-
-                    self.nodes[h].next = j;
-                    self.nodes[j].next = i;
-                    self.nodes[i].next = k;
-                }
-            }
-            0 => {}
-            _ => unreachable!(),
-        }
-    }
-
-    fn part_1(&self) -> i64 {
-        let mut cursor = self.nodes.iter().position(|n| n.value == 0).unwrap();
-        let mut ans = 0;
-
-        for i in 1..3001 {
-            cursor = self.nodes[cursor].next;
-
-            if i % 1000 == 0 {
-                println!("{}", self.nodes[cursor].value);
-                ans += self.nodes[cursor].value;
-            }
-        }
-        ans
+fn rem(me: i64, other: usize) -> usize {
+    let rem = me.rem_euclid(other as i64);
+    if rem < 0 {
+        (rem + other as i64) as usize
+    } else {
+        rem as usize
     }
 }
 
@@ -200,6 +69,11 @@ mod day20_tests {
 0
 4",
         )
+    }
+    #[test]
+    fn modulo() {
+        assert_eq!(rem(-21, 4), 3);
+        assert_eq!(rem(-2, 7), 5);
     }
 
     #[test]
