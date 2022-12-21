@@ -40,3 +40,9 @@ Part 1에서는 node의 id는 별로 상관없는 정보였어서 그냥 한 번
 - 반대쪽 tree와 같은 값을 내기 위해서는 `humn` 노드의 value를 어떻게 바꿔주어야 하는지 (`Option<i64>`)
 
 를 한 번의 순회로 처리했습니다.
+
+## Refactoring
+
+Part 2를 풀 때 구구절절하게 왼쪽 subtree, 오른쪽 subtree 따로 처리해주는 게 별로라서,
+
+`Op::Eq`를 추가해서 해결했습니다.

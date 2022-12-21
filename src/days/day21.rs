@@ -12,21 +12,9 @@ impl Solution for Day21 {
 
     fn solve_part_2(input: String) -> String {
         let tree = MonkeyTree::from(&input);
-        let root = tree.root.clone().unwrap();
-        let left = root.borrow().left.clone().unwrap();
-        let right = root.borrow().right.clone().unwrap();
-
-        if let Some(val) = left
-            .clone()
-            .borrow()
-            .check(right.clone().borrow().evaluate())
-        {
-            val.to_string()
-        } else if let Some(val) = right.borrow().check(left.borrow().evaluate()) {
-            val.to_string()
-        } else {
-            String::new()
-        }
+        let root = tree.root.unwrap().clone();
+        root.borrow_mut().op = Some(Op::Eq);
+        root.clone().borrow().check(1).unwrap().to_string()
     }
 }
 #[derive(Debug)]
@@ -35,6 +23,7 @@ enum Op {
     Times,
     Minus,
     Div,
+    Eq,
 }
 
 type Link<T> = Option<Rc<RefCell<T>>>;
@@ -64,6 +53,13 @@ impl Monkey {
                 Op::Times => left * right,
                 Op::Minus => left - right,
                 Op::Div => left / right,
+                Op::Eq => {
+                    if left == right {
+                        1
+                    } else {
+                        0
+                    }
+                }
             }
         }
     }
@@ -85,6 +81,7 @@ impl Monkey {
             Op::Times => target / right,
             Op::Minus => target + right,
             Op::Div => target * right,
+            Op::Eq => right,
         };
 
         if let Some(val) = self.left.as_ref().unwrap().borrow().check(left_target) {
@@ -95,6 +92,7 @@ impl Monkey {
                 Op::Times => target / left,
                 Op::Minus => left - target,
                 Op::Div => left / target,
+                Op::Eq => left,
             };
 
             if let Some(val) = self.right.as_ref().unwrap().borrow().check(right_target) {
@@ -128,6 +126,7 @@ impl MonkeyTree {
                         "/" => Some(Op::Div),
                         _ => None,
                     };
+
                     (op, None)
                 };
                 let monkey = Monkey {
