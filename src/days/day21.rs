@@ -11,7 +11,22 @@ impl Solution for Day21 {
     }
 
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let tree = MonkeyTree::from(&input);
+        let root = tree.root.clone().unwrap();
+        let left = root.borrow().left.clone().unwrap();
+        let right = root.borrow().right.clone().unwrap();
+
+        if let Some(val) = left
+            .clone()
+            .borrow()
+            .check(right.clone().borrow().evaluate())
+        {
+            val.to_string()
+        } else if let Some(val) = right.borrow().check(left.borrow().evaluate()) {
+            val.to_string()
+        } else {
+            String::new()
+        }
     }
 }
 #[derive(Debug)]
@@ -25,6 +40,7 @@ enum Op {
 type Link<T> = Option<Rc<RefCell<T>>>;
 #[derive(Debug)]
 struct Monkey {
+    id: String,
     op: Option<Op>,
     val: Option<i64>,
     left: Link<Monkey>,
@@ -48,6 +64,43 @@ impl Monkey {
                 Op::Times => left * right,
                 Op::Minus => left - right,
                 Op::Div => left / right,
+            }
+        }
+    }
+
+    fn check(&self, target: i64) -> Option<i64> {
+        if self.is_leaf() {
+            if self.id == "humn" {
+                return Some(target);
+            } else {
+                return None;
+            }
+        }
+
+        let left = self.left.as_ref().unwrap().borrow().evaluate();
+        let right = self.right.as_ref().unwrap().borrow().evaluate();
+
+        let left_target = match self.op.as_ref().unwrap() {
+            Op::Plus => target - right,
+            Op::Times => target / right,
+            Op::Minus => target + right,
+            Op::Div => target * right,
+        };
+
+        if let Some(val) = self.left.as_ref().unwrap().borrow().check(left_target) {
+            Some(val)
+        } else {
+            let right_target = match self.op.as_ref().unwrap() {
+                Op::Plus => target - left,
+                Op::Times => target / left,
+                Op::Minus => left - target,
+                Op::Div => left / target,
+            };
+
+            if let Some(val) = self.right.as_ref().unwrap().borrow().check(right_target) {
+                Some(val)
+            } else {
+                None
             }
         }
     }
@@ -78,6 +131,7 @@ impl MonkeyTree {
                     (op, None)
                 };
                 let monkey = Monkey {
+                    id: name.clone(),
                     op,
                     val,
                     left: None,
@@ -139,7 +193,7 @@ hmdt: 32",
     fn part2() {
         let input = get_sample_input();
         let ans = Day21::solve_part_2(input);
-        let expected = "";
+        let expected = "301";
         assert_eq!(ans, expected);
     }
 }
