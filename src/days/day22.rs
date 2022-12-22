@@ -155,7 +155,6 @@ impl Map {
     fn exec_move_v2(&mut self, n: usize) {
         for _ in 0..n {
             self.next_pos_v2_testing();
-            println!("{} {}", self.pos.0, self.pos.1);
         }
     }
 
@@ -354,7 +353,6 @@ impl Map {
         match command {
             Command::Turn(turn) => {
                 self.exec_turn(turn);
-                println!("turn");
             }
             Command::Move(n) => self.exec_move_v2(*n),
         }
