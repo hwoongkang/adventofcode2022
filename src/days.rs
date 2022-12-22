@@ -56,3 +56,5 @@ mod day20;
 pub use day20::*;
 mod day21;
 pub use day21::*;
+mod day22;
+pub use day22::*;
