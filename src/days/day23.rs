@@ -14,7 +14,12 @@ impl Solution for Day23 {
     }
 
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let mut map = Solver::from(&input);
+        let mut ans = 1;
+        while map.tick() > 0 {
+            ans += 1;
+        }
+        ans.to_string()
     }
 }
 
@@ -107,17 +112,23 @@ impl Solver {
         candidates
     }
 
-    fn tick(&mut self) {
+    fn tick(&mut self) -> usize {
         let candidates = self.first_half();
+
+        let mut moved = 0;
 
         for (next_pos, elves_want_to_move) in candidates.iter() {
             if elves_want_to_move.len() > 1 {
                 continue;
             }
             let elf = elves_want_to_move[0];
+            if &elf != next_pos {
+                moved += 1;
+            }
             self.elves.remove(&elf);
             self.elves.insert(*next_pos);
         }
+        moved
     }
 
     fn alone(&self, elf: &Pos) -> bool {
@@ -301,7 +312,7 @@ mod day23_tests {
     fn part2() {
         let input = get_sample_input();
         let ans = Day23::solve_part_2(input);
-        let expected = "";
+        let expected = "20";
         assert_eq!(ans, expected);
     }
 }
