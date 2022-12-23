@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use super::Solution;
 
@@ -7,7 +7,6 @@ pub struct Day23;
 impl Solution for Day23 {
     fn solve_part_1(input: String) -> String {
         let mut map = Solver::from(&input);
-        println!("{:?}", map);
         String::new()
     }
 
@@ -36,7 +35,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 struct Pos(i32, i32);
 
 #[derive(Debug)]
@@ -80,6 +79,99 @@ impl Solver {
         let area = area as usize;
         area - self.elves.len()
     }
+
+    fn first_half(&mut self) -> HashMap<Pos, Vec<Pos>> {
+        let mut candidates: HashMap<Pos, Vec<Pos>> = HashMap::new();
+
+        for elf in self.elves.iter() {
+            for i in 0..4 {
+                let index = self.direction_index + i;
+                let dir = Direction::nth(index);
+                if let Some(pos) = self.next_pos(elf, &dir) {
+                    candidates.entry(pos).or_default().push(*elf);
+                    break;
+                }
+            }
+        }
+
+        self.direction_index += 1;
+        candidates
+    }
+
+    fn tick(&mut self) {
+        let candidates = self.first_half();
+
+        for (next_pos, elves_want_to_move) in candidates.iter() {
+            if elves_want_to_move.len() > 1 {
+                continue;
+            }
+            let elf = elves_want_to_move[0];
+            self.elves.remove(&elf);
+            self.elves.insert(*next_pos);
+        }
+    }
+
+    fn next_pos(&self, elf: &Pos, direction: &Direction) -> Option<Pos> {
+        match direction {
+            Direction::North => {
+                let Pos(x, y) = elf;
+                let north = Pos(x - 1, *y);
+                let notrh_east = Pos(x - 1, y + 1);
+                let notrh_west = Pos(x - 1, y - 1);
+                let exists = self.elves.contains(&north)
+                    || self.elves.contains(&notrh_east)
+                    || self.elves.contains(&notrh_west);
+                if !exists {
+                    Some(north)
+                } else {
+                    None
+                }
+            }
+            Direction::South => {
+                let Pos(x, y) = elf;
+                let south = Pos(x + 1, *y);
+                let south_east = Pos(x + 1, y + 1);
+                let south_west = Pos(x + 1, y - 1);
+                let exists = self.elves.contains(&south)
+                    || self.elves.contains(&south_east)
+                    || self.elves.contains(&south_west);
+                if !exists {
+                    Some(south)
+                } else {
+                    None
+                }
+            }
+            Direction::West => {
+                let Pos(x, y) = elf;
+                let west = Pos(*x, y - 1);
+                let west_north = Pos(x - 1, y - 1);
+                let west_south = Pos(x + 1, y - 1);
+                let exists = self.elves.contains(&west)
+                    || self.elves.contains(&west_north)
+                    || self.elves.contains(&west_south);
+                if !exists {
+                    Some(west)
+                } else {
+                    None
+                }
+            }
+            Direction::East => {
+                let Pos(x, y) = elf;
+                let east = Pos(*x, y + 1);
+                let east_north = Pos(x - 1, y + 1);
+                let east_south = Pos(x + 1, y + 1);
+
+                let exists = self.elves.contains(&east)
+                    || self.elves.contains(&east_north)
+                    || self.elves.contains(&east_south);
+                if !exists {
+                    Some(east)
+                } else {
+                    None
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -95,17 +187,6 @@ mod day23_tests {
 #.###..
 ##.#.##
 .#..#..",
-        )
-    }
-
-    fn get_smaller_input() -> String {
-        String::from(
-            ".....
-..##.
-..#..
-.....
-..##.
-.....",
         )
     }
 
@@ -139,6 +220,36 @@ mod day23_tests {
         let map = Solver::from(&input);
         let ans = map.ans();
         assert_eq!(ans, 110)
+    }
+
+    #[test]
+    fn part1_first_tick() {
+        let input = String::from(
+            ".....
+..##.
+..#..
+.....
+..##.
+.....
+",
+        );
+        let mut map = Solver::from(&input);
+
+        let after = String::from(
+            "..##.
+.....
+..#..
+...#.
+..#..
+.....
+",
+        );
+
+        let after_tick = Solver::from(&after);
+
+        map.tick();
+
+        assert_eq!(map.elves, after_tick.elves)
     }
 
     #[test]
