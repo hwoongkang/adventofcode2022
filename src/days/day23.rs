@@ -7,7 +7,10 @@ pub struct Day23;
 impl Solution for Day23 {
     fn solve_part_1(input: String) -> String {
         let mut map = Solver::from(&input);
-        String::new()
+        for _ in 0..10 {
+            map.tick();
+        }
+        map.ans().to_string()
     }
 
     fn solve_part_2(input: String) -> String {
@@ -84,6 +87,10 @@ impl Solver {
         let mut candidates: HashMap<Pos, Vec<Pos>> = HashMap::new();
 
         for elf in self.elves.iter() {
+            if self.alone(&elf) {
+                candidates.entry(*elf).or_default().push(*elf);
+                continue;
+            }
             for i in 0..4 {
                 let index = self.direction_index + i;
                 let dir = Direction::nth(index);
@@ -91,6 +98,8 @@ impl Solver {
                     candidates.entry(pos).or_default().push(*elf);
                     break;
                 }
+
+                // staying still
             }
         }
 
@@ -109,6 +118,16 @@ impl Solver {
             self.elves.remove(&elf);
             self.elves.insert(*next_pos);
         }
+    }
+
+    fn alone(&self, elf: &Pos) -> bool {
+        for i in 0..4 {
+            let dir = Direction::nth(i);
+            let Some(_) = self.next_pos(elf, &dir) else {
+				return false;
+			};
+        }
+        true
     }
 
     fn next_pos(&self, elf: &Pos, direction: &Direction) -> Option<Pos> {
@@ -214,6 +233,18 @@ mod day23_tests {
         )
     }
 
+    fn get_smaller_input() -> String {
+        String::from(
+            ".....
+..##.
+..#..
+.....
+..##.
+.....
+",
+        )
+    }
+
     #[test]
     fn part1_answer() {
         let input = get_final_result();
@@ -224,15 +255,7 @@ mod day23_tests {
 
     #[test]
     fn part1_first_tick() {
-        let input = String::from(
-            ".....
-..##.
-..#..
-.....
-..##.
-.....
-",
-        );
+        let input = get_smaller_input();
         let mut map = Solver::from(&input);
 
         let after = String::from(
@@ -248,6 +271,28 @@ mod day23_tests {
         let after_tick = Solver::from(&after);
 
         map.tick();
+
+        assert_eq!(map.elves, after_tick.elves)
+    }
+
+    #[test]
+    fn part1_second_tick() {
+        let input = get_smaller_input();
+        let mut map = Solver::from(&input);
+
+        map.tick();
+        map.tick();
+
+        let after = String::from(
+            ".....
+..##.
+.#...
+....#
+.....
+..#..",
+        );
+
+        let after_tick = Solver::from(&after);
 
         assert_eq!(map.elves, after_tick.elves)
     }
