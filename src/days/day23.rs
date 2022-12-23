@@ -93,7 +93,6 @@ impl Solver {
 
         for elf in self.elves.iter() {
             if self.alone(&elf) {
-                candidates.entry(*elf).or_default().push(*elf);
                 continue;
             }
             for i in 0..4 {
