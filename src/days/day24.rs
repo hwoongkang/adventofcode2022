@@ -153,34 +153,41 @@ impl Map {
     }
 
     fn solve(&self) -> usize {
-        let mut ans = 0;
+        let mut space: Vec<State> = vec![self.state.clone()];
 
-        let mut max_dist = 0;
+        let (rows, cols) = self.state.get_size();
 
-        let mut states: Vec<State> = vec![self.state.clone()];
+        let lcm = lcm(rows - 2, cols - 2);
+
+        while space.len() < lcm {
+            let last = space.last().unwrap();
+            space.push(last.next_state());
+        }
+
+        let mut visited = vec![vec![vec![false; cols]; rows]; lcm];
 
         let mut queue: VecDeque<(usize, Pos)> = VecDeque::new();
 
         queue.push_back((0, self.start));
 
+        visited[0][self.start.0][self.start.1] = true;
+
         while let Some((dist, pos)) = queue.pop_front() {
-            if dist > max_dist {
-                max_dist = dist;
-                println!("iterating... {}", dist);
-            }
             if pos == self.end {
                 return dist;
             }
+
             let next_dist = dist + 1;
-            while next_dist >= states.len() {
-                let last_state = states.last().unwrap();
-                states.push(last_state.next_state());
-            }
-            for np in self.next_positions(pos, &states[next_dist]) {
-                queue.push_back((next_dist, np));
+
+            for next_pos in self.next_positions(pos, &space[next_dist % lcm]) {
+                if !visited[next_dist % lcm][next_pos.0][next_pos.1] {
+                    visited[next_dist % lcm][next_pos.0][next_pos.1] = true;
+                    queue.push_back((next_dist, next_pos));
+                }
             }
         }
-        ans
+
+        0
     }
 
     fn next_positions(&self, pos: Pos, state: &State) -> Vec<Pos> {
@@ -189,6 +196,7 @@ impl Map {
         [(0, 0), (1, 0), (0, 1), (rows - 1, 0), (0, cols - 1)]
             .iter()
             .map(|(dr, dc)| ((pos.0 + dr) % rows, (pos.1 + dc) % cols))
+            .map(|pos| pos)
             .filter_map(|(r, c)| match &state.0[r][c] {
                 Tile::Wall => None,
                 Tile::Empty(v) => match v.len() {
@@ -200,24 +208,44 @@ impl Map {
     }
 }
 
+fn gcd(a: usize, b: usize) -> usize {
+    let (a, b) = if a > b { (b, a) } else { (a, b) };
+    if b % a == 0 {
+        a
+    } else {
+        gcd(b % a, a)
+    }
+}
+
+fn lcm(a: usize, b: usize) -> usize {
+    a * b / gcd(a, b)
+}
+
 #[cfg(test)]
 mod day24_tests {
     use super::*;
 
-    fn get_sample_input() -> String {
-        String::from(
-            "#S######
-#>>.<^<#
-#.<..<<#
-#>v.><>#
-#<^v^^>#
-######E#",
-        )
-    }
     fn state_from_string(input: String) -> State {
         let map = Map::from(&input);
         let state = map.state;
         state
+    }
+
+    #[test]
+    fn test_state_lcm() {
+        let input = get_sample_input();
+
+        let state = state_from_string(input);
+
+        let (rows, cols) = state.get_size();
+
+        let mut s = state.clone();
+
+        for _ in 0..lcm(rows - 2, cols - 2) {
+            s = s.next_state();
+        }
+
+        assert_eq!(s, state);
     }
 
     #[test]
@@ -265,6 +293,17 @@ mod day24_tests {
         assert_eq!(state, tick_2);
     }
 
+    fn get_sample_input() -> String {
+        String::from(
+            "#S######
+#>>.<^<#
+#.<..<<#
+#>v.><>#
+#<^v^^>#
+######E#",
+        )
+    }
+
     #[test]
     fn test_part_1() {
         let input = get_sample_input();
@@ -272,12 +311,22 @@ mod day24_tests {
         let expected = "18";
         assert_eq!(ans, expected);
     }
+    #[test]
+    fn test_part_1_minute_2() {
+        let input = get_sample_input();
+        let state = state_from_string(input);
+
+        let state = state.next_state();
+        let state = state.next_state();
+
+        assert_eq!(state.0[2][1], Tile::Empty(vec![]));
+    }
 
     #[test]
     fn test_part_2() {
         let input = get_sample_input();
         let ans = Day24::solve_part_2(input);
-        let expected = "";
+        let expected = "54";
         assert_eq!(ans, expected);
     }
 }
