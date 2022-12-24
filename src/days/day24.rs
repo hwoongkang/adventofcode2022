@@ -7,10 +7,11 @@ pub struct Day24;
 impl Solution for Day24 {
     fn solve_part_1(input: String) -> String {
         let map = Map::from(&input);
-        map.solve().to_string()
+        map.part_1().to_string()
     }
     fn solve_part_2(input: String) -> String {
-        String::new()
+        let map = Map::from(&input);
+        map.part_2().to_string()
     }
 }
 
@@ -152,7 +153,7 @@ impl Map {
         Self { state, start, end }
     }
 
-    fn solve(&self) -> usize {
+    fn shortest_distance(&self, from: Pos, to: Pos, starting_at: usize) -> usize {
         let mut space: Vec<State> = vec![self.state.clone()];
 
         let (rows, cols) = self.state.get_size();
@@ -168,12 +169,12 @@ impl Map {
 
         let mut queue: VecDeque<(usize, Pos)> = VecDeque::new();
 
-        queue.push_back((0, self.start));
+        queue.push_back((starting_at, from));
 
-        visited[0][self.start.0][self.start.1] = true;
+        visited[starting_at % lcm][from.0][from.1] = true;
 
         while let Some((dist, pos)) = queue.pop_front() {
-            if pos == self.end {
+            if pos == to {
                 return dist;
             }
 
@@ -188,6 +189,20 @@ impl Map {
         }
 
         0
+    }
+
+    fn part_1(&self) -> usize {
+        self.shortest_distance(self.start, self.end, 0)
+    }
+
+    fn part_2(&self) -> usize {
+        let start_to_end = self.shortest_distance(self.start, self.end, 0);
+
+        let end_to_start = self.shortest_distance(self.end, self.start, start_to_end);
+
+        let return_to_end = self.shortest_distance(self.start, self.end, end_to_start);
+
+        return_to_end
     }
 
     fn next_positions(&self, pos: Pos, state: &State) -> Vec<Pos> {
